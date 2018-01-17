@@ -1,0 +1,156 @@
+#!/bin/bash
+#2018年1月13日 09:56:05
+#####################################
+
+#################变量#########################
+###http2.2
+H_URL=http://mirrors.hust.edu.cn/apache/httpd/
+H_FID=httpd-2.2.34
+H_FIX=/usr/local/apache2
+##############Httpd 2.4 
+HS_URL=http://zy-res.oss-cn-hangzhou.aliyuncs.com/httpd/
+HS_FID=httpd-2.4.10
+
+###############MySQL define path variable
+M_DIR=mysql-5.5.20
+M_URL=http://down1.chinaunix.net/distfiles/
+M_FIX=/usr/local/mysql
+##############PHP define path variable
+P_DIR=php-5.3.28
+P_URL=http://mirrors.sohu.com/php/
+P_FIX=/usr/local/php5
+
+function Apache2(){
+	#install httpd
+	yum install gcc gcc-c++  apr  apr-* zlib-devel -y
+	[ ! -f ${H_FID}.tar.gz  ]&&wget -c $H_URL${H_FID}.tar.gz
+	[ ! -d $H_FID ]&&rm -rf $H_FID
+	tar xzf ${H_FID}.tar.gz&&cd $H_FID
+	./configure --prefix=$H_FIX \
+	--with-mpm=prefork \
+	--enable-so \
+	--enable-rewrite \
+	--enable-mods-shared=all \
+	--enable-nonportable-atomics=yes \
+	--disable-dav \
+	--enable-deflate \
+	--enable-cache \
+	--enable-disk-cache \
+	--enable-mem-cache \
+	--enable-file-cache
+	[ $? -ne 0 ]&&exit 1
+	make&&make install
+	\cp support/apachectl /etc/init.d/httpd
+	chmod u+x /etc/init.d/httpd
+	/etc/init.d/httpd start
+	[ `netstat -lnt|grep 80|wc -l` -ne 0 ]&&echo "install Apache2.2 OK"
+}
+
+function Apache4(){
+	yum -y install pcre-devel  openssl-devel
+	[ ! -f ${HS_FID}.tar.gz ]&&wget -c $HS_URL${HS_FID}.tar.gz&&tar xzf ${HS_FID}.tar.gz
+	[ ! -f apr-1.5.0.tar.gz ]&&wget -c http://oss.aliyuncs.com/aliyunecs/onekey/apache/apr-1.5.0.tar.gz&&tar xf apr-1.5.0.tar.gz&&\cp -rf apr-1.5.0 $HS_FID/srclib/apr
+	[ ! -f apr-util-1.5.3.tar.gz ]&&wget  -c http://oss.aliyuncs.com/aliyunecs/onekey/apache/apr-util-1.5.3.tar.gz&&tar xf apr-util-1.5.3.tar.gz&&cp -rf apr-util-1.5.3 $HS_FID/srclib/apr-util
+	cd $HS_FID
+	./configure --prefix=$H_FIX \
+	--with-mpm=prefork \
+	--enable-so \
+	--enable-rewrite \
+	--enable-mods-shared=all \
+	--enable-nonportable-atomics=yes \
+	--disable-dav \
+	--enable-deflate \
+	--enable-cache \
+	--enable-disk-cache \
+	--enable-mem-cache \
+	--enable-file-cache \
+	--enable-ssl \
+	--with-included-apr \
+	--enable-modules=all  \
+	--enable-mods-shared=all
+	[ $? -ne 0 ]&&exit 1
+	make&&make install
+	\cp support/apachectl /etc/init.d/httpd&&chmod u+x /etc/init.d/httpd
+	/etc/init.d/httpd start
+	[ `netstat -lnt|grep 80|wc -l` -ne 0 ]&&echo "apache2.4安装完成.OK"
+}
+
+function Mysql(){
+	[ `grep "mysql" /etc/passwd|wc -l` -eq 0 ]&&useradd -s /sbin/nologin mysql
+	[ ! -f ${M_DIR}.tar.gz  ]&&wget -c $M_URL${M_DIR}.tar.gz
+	[ ! -d $M_DIR ]&&rm -rf $M_DIR
+	tar xf ${M_DIR}.tar.gz&&cd $M_DIR
+	yum install cmake ncurses-devel -y
+	cmake . -DCMAKE_INSTALL_PREFIX=$M_FIX \
+	-DMYSQL_UNIX_ADDR=/tmp/mysql.sock \
+	-DMYSQL_DATADIR=/data/mysql \
+	-DSYSCONFDIR=/etc \
+	-DMYSQL_USER=mysql \
+	-DMYSQL_TCP_PORT=3306 \
+	-DWITH_XTRADB_STORAGE_ENGINE=1 \
+	-DWITH_INNOBASE_STORAGE_ENGINE=1 \
+	-DWITH_PARTITION_STORAGE_ENGINE=1 \
+	-DWITH_BLACKHOLE_STORAGE_ENGINE=1 \
+	-DWITH_MYISAM_STORAGE_ENGINE=1 \
+	-DWITH_READLINE=1 \
+	-DENABLED_LOCAL_INFILE=1 \
+	-DWITH_EXTRA_CHARSETS=1 \
+	-DDEFAULT_CHARSET=utf8 \
+	-DDEFAULT_COLLATION=utf8_general_ci \
+	-DEXTRA_CHARSETS=all \
+	-DWITH_BIG_TABLES=1 \
+	-DWITH_DEBUG=0
+	[ $? -ne 0 ]&&exit 1
+	make&&make install
+	\cp support-files/my-small.cnf  /etc/my.cnf
+	\cp support-files/mysql.server /etc/init.d/mysqld
+	chmod +x /etc/init.d/mysqld
+	chkconfig --add mysqld
+	chkconfig mysqld on
+	ln -s /usr/local/mysql/bin/* /usr/bin/
+	$M_FIX/scripts/mysql_install_db --user=mysql --basedir=/usr/local/mysql --datadir=/usr/local/mysql/data &
+	$M_FIX/bin/mysqld_safe --user=mysql &
+	#[ `netstat -lnt|grep 3306|wc -l` -ne 0 ]&&echo "MYSQL安装完成.OK"
+}
+
+function Php5(){
+	#install php
+	[ ! -f ${P_DIR}.tar.bz2 ]&&wget -c $P_URL${P_DIR}.tar.bz2
+	[ ! -d ${P_DIR} ]&&tar xf ${P_DIR}.tar.bz2 
+	yum install ncurses-devel  bison  libxml2* -y
+	cd ${P_DIR}
+	./configure --prefix=$P_FIX  --with-config-file-path=/usr/local/php5/etc   --with-apxs2=/usr/local/apache2/bin/apxs  --with-mysql=/usr/local/mysql55/
+	[ $? -ne 0 ]&&exit 1
+	make&&make install
+########PHPinfo测试页面
+	[ ! -f $H_FIX/htdocs/PHPinfo.php ]&&echo '<?php phpinfo(); ?>' >$H_FIX/htdocs/PHPinfo.php 
+}
+function Menu(){
+	echo -e "\E[1;31m1)安装apache2.2\E[1;31m"
+	echo -e "\E[1;31m2)安装apache2.4\E[1;31m"
+	echo -e "\E[1;31m3)安装MySQL\E[1;31m"
+	echo -e "\E[1;31m4)安装php5.3\E[1;31m"
+	echo -e "\E[1;31m5)安装Apache2.2+mysql+php5\E[1;31m"
+	echo -e "\E[1;31m6)安装Apache2.4+mysql+php5\E[1;31m"
+	echo -e "\E[1;31mPlease Enter sh lamp.sh 1|2|3|4|5|6 \E[1;31m"
+	exit 1
+}
+
+function All1(){
+	Apache2
+	Mysql
+	Php5
+}
+
+function All2(){
+	Apache4
+	Mysql
+	Php5
+}
+[ "$1" == "1"  ]&&Apache2
+[ "$1" == "2"  ]&&Apache4
+[ "$1" == "3"  ]&&Mysql
+[ "$1" == "4"  ]&&Php5
+[ "$1" == "5"  ]&&All1
+[ "$1" == "6"  ]&&All2
+[ "$#" == "0"  ]&&Menu
