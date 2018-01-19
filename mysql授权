@@ -11,7 +11,7 @@ AIR(){
         exit 0
 }
 GRANT(){
-        mysql -u$USE -p$PASSWD -e "grant all on *.* to  $DB_USE@'$IP' identified by '$PASSWD'; flush privileges;"
+        mysql -u$USE -p$PASSWD -e "grant select，lock table on *.* to  $DB_USE@'$IP' identified by '$PASSWD'; flush privileges;"
 }
 SHOW(){
         mysql -u$USE -p$PASSWD -e " show grants for $DB_USE@'$IP';"
