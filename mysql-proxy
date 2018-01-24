@@ -1,0 +1,23 @@
+#!/bin/bash
+#2018年1月24日08:52:04
+#chenyu
+wget -c http://ftp.ntu.edu.tw/pub/MySQL/Downloads/MySQL-Proxy/mysql-proxy-0.8.4-linux-el6-x86-64bit.tar.gz  
+useradd  -r  mysql-proxy
+tar  zxvf  mysql-proxy-0.8.4-linux-el6-x86-64bit.tar.gz  -C  /usr/local
+mv  /usr/local/mysql-proxy-0.8.4-linux-el6-x86-64bit  /usr/local/mysql-proxy
+
+mysql-proxy --daemon \
+--log-level=debug \
+--user=mysql-proxy \
+--keepalive \
+--log-file=/var/log/mysql-proxy.log \
+--plugins="proxy" \
+--proxy-backend-addresses="192.168.10.14:3306" \
+--proxy-read-only-backend-addresses="192.168.10.15:3306" \
+--proxy-lua-script="/usr/local/mysql-proxy/share/doc/mysql-proxy/rw-splitting.lua" \
+--plugins=admin \
+--admin-username="admin" \
+--admin-password="admin" \
+--admin-lua-script="/usr/local/mysql-proxy/lib/mysql-proxy/lua/admin.lua"
+
+mysql -uroot -p123456 -e "select  *  from  backends;"|sed '1d'
