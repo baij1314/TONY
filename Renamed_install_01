@@ -17,7 +17,10 @@ chkconfig|egrep -v "sshd|network|rsyslog|crond|sysstat"|gawk '{print "chkconfig 
 ########################关selinux
 sed -i 's#=enforcing#=disabled#g' /etc/selinux/config&&setenforce 0&> /dev/null
 ######################改名##########
-echo  "127.0.0.1 $1 " >>/etc/hosts
+grep "$1" /etc/hosts|wc-l
+if [ $? -eq 0 ]:then
+	echo  "127.0.0.1 $1 " >>/etc/hosts
+fi	
 sed -i "s/${NAME}/${HOST}/g" /etc/sysconfig/network
 echo "---------------------------"
 echo "Renamed OK"
