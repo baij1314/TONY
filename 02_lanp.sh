@@ -1,5 +1,5 @@
 #!/bin/bash
-
+CORES=`grep 'cpu cores' /proc/cpuinfo|awk -F':' '{print $2}'|tail -1`
 ###################  http-2.2.34
 H_URL=http://mirrors.hust.edu.cn/apache/httpd/
 H_FID=httpd-2.2.34
@@ -77,15 +77,16 @@ Mysql(){
 	-DEXTRA_CHARSETS=all \
 	-DWITH_BIG_TABLES=1 \
 	-DWITH_DEBUG=0
-	[ $? -ne 0 ]&&exit 1
-	make&&make install
+	[ $? -ne 0 ]&&exit 0
+	[ $CORES -eq 1]&&make&&make install
+	make -j$CORES&&make install
 	\cp support-files/my-small.cnf  /etc/my.cnf
 	\cp support-files/mysql.server /etc/init.d/mysqld
 	chmod +x /etc/init.d/mysqld
 	chkconfig --add mysqld
 	chkconfig mysqld on
 	ln -s /usr/local/mysql/bin/* /usr/bin/
-	$M_FIX/scripts/mysql_install_db --user=mysql --basedir=/usr/local/mysql --datadir=/usr/local/mysql/data &&>/dev/null
+	/usr/local/mysql/scripts/mysql_install_db --user=mysql --basedir=/usr/local/mysql --datadir=/usr/local/mysql/data &&>/dev/null
 	$M_FIX/bin/mysqld_safe --user=mysql &>/dev/null
 	[ `netstat -lnt|grep 3306|wc -l` -ne 0 ]&&echo "MYSQL安装完成.OK"
 }
@@ -99,7 +100,21 @@ All_2()
 	Php
 	Mysql
 }
-[ $# -eq 0 ]&&exit
+
+MENU(){
+	cat >>EOF
+	1) apache2.2
+2)PHP5
+3)MySQL
+4)apache2.2+PHP5
+5)apache2.2+PHP5+MySQL
+6)
+7)
+8)
+EOF
+	exit 0
+}
+[ $# -eq 0 ]&&MENU
 [ $1 -eq 1 ]&&Http
 [ $1 -eq 2 ]&&Php
 [ $1 -eq 3 ]&&Mysql
