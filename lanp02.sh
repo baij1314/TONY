@@ -85,7 +85,7 @@ Mysql(){
 	chkconfig --add mysqld
 	chkconfig mysqld on
 	ln -s /usr/local/mysql/bin/* /usr/bin/
-	$M_FIX/scripts/mysql_install_db --user=mysql --basedir=/usr/local/mysql --datadir=/usr/local/mysql/data &
+	$M_FIX/scripts/mysql_install_db --user=mysql --basedir=/usr/local/mysql --datadir=/usr/local/mysql/data &&>/dev/null
 	$M_FIX/bin/mysqld_safe --user=mysql &>/dev/null
 	[ `netstat -lnt|grep 3306|wc -l` -ne 0 ]&&echo "MYSQL安装完成.OK"
 }
