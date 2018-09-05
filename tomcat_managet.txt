@@ -1,0 +1,41 @@
+寻找内存泄露
+http://localhost:8080/manager/text/findleaks
+列出当前已部署的应用
+http://localhost:8080/manager/text/list
+远程部署新应用
+http://localhost:8080/manager/text/deploy?path=/cc&war=file:/root/war/cc.war
+取消对现有应用的部署
+http://localhost:8080/manager/text/undeploy?path=/cc
+停止已有应用
+http://localhost:8080/manager/text/stop?path=/examples
+开启一个现有应用
+http://localhost:8080/manager/text/start?path=/examples
+重新加载一个现有应用
+http://localhost:8080/manager/text/reload?path=/examples
+虚拟机（VM）相关信息
+http://localhost:8080/manager/text/vminfo
+列出 OS 及 JVM 属性
+http://localhost:8080/manager/text/serverinfo
+保存配置信息
+http://localhost:8080/manager/text/save
+
+#java.lang:type=Threading PeakThreadCount
+http://192.168.8.65:8080/manager/jmxproxy/?get=java.lang:type=Threading&att=PeakThreadCount
+#java.lang:type=Memory HeapMemoryUsage.max
+http://localhost:8080/manager/jmxproxy/?get=java.lang:type=Memory&att=HeapMemoryUsage&key=max"
+#Tomcat version
+http://192.168.8.65:8080/manager/jmxproxy/?get=Catalina:type=Server&att=serverInfo
+
+http://webserver/manager/jmxproxy/?qry=STUFF
+ qry=*%3Atype%3DRequestProcessor%2C* --> type=RequestProcessor which will locate all workers which can process requests and report their state.
+ qry=*%3Aj2eeType=Servlet%2c* --> j2eeType=Servlet which return all loaded servlets.
+ qry=Catalina%3Atype%3DEnvironment%2Cresourcetype%3DGlobal%2Cname%3DsimpleValue --> Catalina:type=Environment,resourcetype=Global,name=simpleValue which look for a specific MBean by the given name.
+
+线程转储
+http://localhost:8080/manager/text/threaddump
+
+连接器 SSL/TLS 诊断
+http://localhost:8080/manager/text/sslConnectorCiphers
+
+
+curl -u admin:admin  "http://localhost:8080/manager/text/deploy?path=/cc&war=file:/root/war/cc.war"
